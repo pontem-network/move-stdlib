@@ -1,5 +1,5 @@
 [package]
-name = "MoveStdlib"
+name = "DiemStdlib"
 version = "1.5.0"
 
 [addresses]
