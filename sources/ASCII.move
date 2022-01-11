@@ -30,7 +30,7 @@ module Std::ASCII {
 
     /// Convert a `byte` into a `Char` that is checked to make sure it is valid ASCII.
     public fun char(byte: u8): Char {
-        assert(is_valid_char(byte), Errors::invalid_argument(EINVALID_ASCII_CHARACTER));
+        assert!(is_valid_char(byte), Errors::invalid_argument(EINVALID_ASCII_CHARACTER));
         Char { byte }
     }
     spec char {
@@ -41,7 +41,7 @@ module Std::ASCII {
     /// `bytes` contains non-ASCII characters.
     public fun string(bytes: vector<u8>): String {
        let x = try_string(bytes);
-       assert(
+       assert!(
             Option::is_some(&x),
             Errors::invalid_argument(EINVALID_ASCII_CHARACTER)
        );
