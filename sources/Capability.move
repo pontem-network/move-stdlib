@@ -76,8 +76,8 @@ module Std::Capability {
     use Std::Signer;
     use Std::Vector;
 
-    const ECAP: u64 = 0;
-    const EDELEGATE: u64 = 1;
+    const ERR_CAP: u64 = 0;
+    const ERR_CAP_DELEGATE: u64 = 1;
 
     /// The token representing an acquired capability. Cannot be stored in memory, but copied and dropped freely.
     struct Cap<phantom Feature> has copy, drop {
@@ -104,7 +104,7 @@ module Std::Capability {
     /// they own the `Feature` type parameter.
     public fun create<Feature>(owner: &signer, _feature_witness: &Feature) {
         let addr = Signer::address_of(owner);
-        assert(!exists<CapState<Feature>>(addr), Errors::already_published(ECAP));
+        assert(!exists<CapState<Feature>>(addr), Errors::already_published(ERR_CAP));
         move_to<CapState<Feature>>(owner, CapState{ delegates: Vector::empty() });
     }
 
@@ -130,12 +130,12 @@ module Std::Capability {
         if (exists<CapDelegateState<Feature>>(addr)) {
             let root_addr = borrow_global<CapDelegateState<Feature>>(addr).root;
             // double check that requester is actually registered as a delegate
-            assert(exists<CapState<Feature>>(root_addr), Errors::invalid_state(EDELEGATE));
+            assert(exists<CapState<Feature>>(root_addr), Errors::invalid_state(ERR_CAP_DELEGATE));
             assert(Vector::contains(&borrow_global<CapState<Feature>>(root_addr).delegates, &addr),
-                   Errors::invalid_state(EDELEGATE));
+                   Errors::invalid_state(ERR_CAP_DELEGATE));
             root_addr
         } else {
-            assert(exists<CapState<Feature>>(addr), Errors::not_published(ECAP));
+            assert(exists<CapState<Feature>>(addr), Errors::not_published(ERR_CAP));
             addr
         }
     }

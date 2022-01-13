@@ -6,7 +6,7 @@ module Std::ASCII {
     use Std::Option::{Self, Option};
 
     /// An invalid ASCII character was encountered when creating an ASCII string.
-    const EINVALID_ASCII_CHARACTER: u64 = 0;
+    const ERR_INVALID_ASCII_CHARACTER: u64 = 0;
 
    /// The `String` struct holds a vector of bytes that all represent
    /// valid ASCII characters. Note that these ASCII characters may not all
@@ -30,7 +30,7 @@ module Std::ASCII {
 
     /// Convert a `byte` into a `Char` that is checked to make sure it is valid ASCII.
     public fun char(byte: u8): Char {
-        assert(is_valid_char(byte), Errors::invalid_argument(EINVALID_ASCII_CHARACTER));
+        assert(is_valid_char(byte), Errors::invalid_argument(ERR_INVALID_ASCII_CHARACTER));
         Char { byte }
     }
     spec char {
@@ -43,7 +43,7 @@ module Std::ASCII {
        let x = try_string(bytes);
        assert(
             Option::is_some(&x),
-            Errors::invalid_argument(EINVALID_ASCII_CHARACTER)
+            Errors::invalid_argument(ERR_INVALID_ASCII_CHARACTER)
        );
        Option::destroy_some(x)
     }
