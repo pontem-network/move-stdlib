@@ -59,7 +59,7 @@ module Std::BitVectorTests {
 
     #[test]
     fun test_set_bit_and_index_odd_size() {
-        test_bitvector_set_unset_of_size(300)
+        test_bitvector_set_unset_of_size(75)
     }
 
     #[test]
@@ -110,7 +110,7 @@ module Std::BitVectorTests {
 
     #[test]
     fun test_shift_left() {
-        let bitlen = 133;
+        let bitlen = 25;
         let bitvector = BitVector::new(bitlen);
 
         let i = 0;
