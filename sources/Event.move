@@ -7,13 +7,13 @@ module Std::Event {
     use Std::GUID::{Self, GUID};
 
     /// Wrapper for a GUID for layout compatibility with legacy EventHandle id's
-    // This is a hack for layout compatibility. The old EventHandle.guid was a 24 byte vector<u8>
+    // This is a hack for layout compatibility. The old EventHandle.guid was a 40 byte vector<u8>
     // created from `append(u64 counter bytes, account address bytes)`. This dummy struct mimics
     // the BCS layout of the old value.
     // Note: the reason why this works is somewhat subtle. The BCS encoding for a vector V of
     // length N is `uleb128_encoded_bytes(N) | contents(V)`
     // (see https://github.com/diem/bcs#fixed-and-variable-length-sequences).
-    // uleb128_encoded_bytes(24) fits into 1 byte, so using len_bytes: u8 is what we want here
+    // uleb128_encoded_bytes(40) fits into 1 byte, so using len_bytes: u8 is what we want here
     struct GUIDWrapper has store, drop { len_bytes: u8, guid: GUID }
 
     /// A handle for an event such that:
@@ -35,8 +35,8 @@ module Std::Event {
 
     /// Use EventHandleGenerator to generate a unique event handle for `sig`
     public fun new_event_handle<T: drop + store>(account: &signer): EventHandle<T> {
-        // must be 24 for compatibility with legacy Event ID's--see comment on GUIDWrapper
-        let len_bytes = 24u8;
+        // must be 40 for compatibility with legacy Event ID's--see comment on GUIDWrapper
+        let len_bytes = 40u8;
          EventHandle<T> {
             counter: 0,
             guid: GUIDWrapper { len_bytes, guid: GUID::create(account) }
