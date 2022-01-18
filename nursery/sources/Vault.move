@@ -89,13 +89,13 @@ module Std::Vault {
     // ================================================================================================================
     // Error reasons
 
-    const EVAULT: u64 = 0;
-    const EDELEGATE: u64 = 1;
-    const EACCESSOR_IN_USE: u64 = 2;
-    const EACCESSOR_INCONSISTENCY: u64 = 3;
-    const EDELEGATE_TO_SELF: u64 = 4;
-    const EDELEGATION_NOT_ENABLED: u64 = 5;
-    const EEVENT: u64 = 6;
+    const ERR_VAULT: u64 = 0;
+    const ERR_DELEGATE: u64 = 1;
+    const ERR_ACCESSOR_IN_USE: u64 = 2;
+    const ERR_ACCESSOR_INCONSISTENCY: u64 = 3;
+    const ERR_DELEGATE_TO_SELF: u64 = 4;
+    const ERR_DELEGATION_NOT_ENABLED: u64 = 5;
+    const ERR_EVENT: u64 = 6;
 
 
     // ================================================================================================================
@@ -133,16 +133,16 @@ module Std::Vault {
     struct CapType has copy, drop, store { code: u8 }
 
     /// Creates a read capability type.
-    public fun read_cap_type(): CapType { CapType{ code : 0 } }
+    public fun read_cap_type(): CapType { CapType{ code: 0 } }
 
     /// Creates a modify  capability type.
-    public fun modify_cap_type(): CapType { CapType{ code : 1 } }
+    public fun modify_cap_type(): CapType { CapType{ code: 1 } }
 
     /// Creates a delegate  capability type.
-    public fun delegate_cap_type(): CapType { CapType{ code : 2 } }
+    public fun delegate_cap_type(): CapType { CapType{ code: 2 } }
 
     /// Creates a transfer  capability type.
-    public fun transfer_cap_type(): CapType { CapType{ code : 3 } }
+    public fun transfer_cap_type(): CapType { CapType{ code: 3 } }
 
     // ================================================================================================================
     // Events
@@ -177,7 +177,7 @@ module Std::Vault {
 
     /// Private. If the vault supports delegation, information about the delegates.
     struct VaultDelegates<phantom Content: store> has key {
-         /// The currently authorized delegates.
+        /// The currently authorized delegates.
         delegates: vector<address>,
     }
 
@@ -203,9 +203,9 @@ module Std::Vault {
     // Vault Creation and Removal
 
     /// Creates new vault for the given signer. The vault is populated with the `initial_content`.
-    public fun new<Content: store>(owner: &signer,  initial_content: Content) {
+    public fun new<Content: store>(owner: &signer, initial_content: Content) {
         let addr = Signer::address_of(owner);
-        assert!(!exists<Vault<Content>>(addr), Errors::already_published(EVAULT));
+        assert!(!exists<Vault<Content>>(addr), Errors::already_published(ERR_VAULT));
         move_to<Vault<Content>>(
             owner,
             Vault{
@@ -218,22 +218,22 @@ module Std::Vault {
     /// Returns `false` otherwise.
     public fun is_delegation_enabled<Content: store>(owner: &signer): bool {
         let addr = Signer::address_of(owner);
-        assert!(exists<Vault<Content>>(addr), Errors::not_published(EVAULT));
+        assert!(exists<Vault<Content>>(addr), Errors::not_published(ERR_VAULT));
         exists<VaultDelegates<Content>>(addr)
     }
 
     /// Enables delegation functionality for this vault. By default, vaults to not support delegation.
     public fun enable_delegation<Content: store>(owner: &signer) {
-        assert!(!is_delegation_enabled<Content>(owner), Errors::already_published(EDELEGATE));
-        move_to<VaultDelegates<Content>>(owner, VaultDelegates{delegates: Vector::empty()})
+        assert!(!is_delegation_enabled<Content>(owner), Errors::already_published(ERR_DELEGATE));
+        move_to<VaultDelegates<Content>>(owner, VaultDelegates{ delegates: Vector::empty() })
     }
 
     /// Enables event generation for this vault. This passed metadata is used to identify
     /// the vault in events.
     public fun enable_events<Content: store>(owner: &signer, metadata: vector<u8>) {
         let addr = Signer::address_of(owner);
-        assert!(exists<Vault<Content>>(addr), Errors::not_published(EVAULT));
-        assert!(!exists<VaultEvents<Content>>(addr), Errors::already_published(EEVENT));
+        assert!(exists<Vault<Content>>(addr), Errors::not_published(ERR_VAULT));
+        assert!(!exists<VaultEvents<Content>>(addr), Errors::already_published(ERR_EVENT));
         move_to<VaultEvents<Content>>(
             owner,
             VaultEvents{
@@ -249,16 +249,16 @@ module Std::Vault {
     public fun remove_vault<Content: store + drop>(owner: &signer): Content
     acquires Vault, VaultDelegates, VaultDelegate, VaultEvents {
         let addr = Signer::address_of(owner);
-        assert!(exists<Vault<Content>>(addr), Errors::not_published(EVAULT));
-        let Vault{content} = move_from<Vault<Content>>(addr);
-        assert!(Option::is_some(&content), Errors::invalid_state(EACCESSOR_IN_USE));
+        assert!(exists<Vault<Content>>(addr), Errors::not_published(ERR_VAULT));
+        let Vault{ content } = move_from<Vault<Content>>(addr);
+        assert!(Option::is_some(&content), Errors::invalid_state(ERR_ACCESSOR_IN_USE));
 
         if (exists<VaultDelegates<Content>>(addr)) {
-            let delegate_cap = DelegateCap<Content>{vault_address: addr, authority: addr};
+            let delegate_cap = DelegateCap<Content>{ vault_address: addr, authority: addr };
             revoke_all(&delegate_cap);
         };
         if (exists<VaultEvents<Content>>(addr)) {
-            let VaultEvents{metadata: _metadata, delegate_events, transfer_events} =
+            let VaultEvents{ metadata: _metadata, delegate_events, transfer_events } =
                 move_from<VaultEvents<Content>>(addr);
             Event::destroy_handle(delegate_events);
             Event::destroy_handle(transfer_events);
@@ -310,11 +310,11 @@ module Std::Vault {
         if (exists<VaultDelegate<Content>>(addr)) {
             // The signer is a delegate. Check it's granted capabilities.
             let delegate = borrow_global<VaultDelegate<Content>>(addr);
-            assert!(Vector::contains(&delegate.granted_caps, &cap), Errors::requires_capability(EDELEGATE));
+            assert!(Vector::contains(&delegate.granted_caps, &cap), Errors::requires_capability(ERR_DELEGATE));
             (delegate.vault_address, addr)
         } else {
             // If it is not a delegate, it must be the owner to succeed.
-            assert!(exists<Vault<Content>>(addr), Errors::not_published(EVAULT));
+            assert!(exists<Vault<Content>>(addr), Errors::not_published(ERR_VAULT));
             (addr, addr)
         }
     }
@@ -337,7 +337,7 @@ module Std::Vault {
     public fun read_accessor<Content: store + drop>(cap: &ReadCap<Content>): ReadAccessor<Content>
     acquires Vault {
         let content = &mut borrow_global_mut<Vault<Content>>(cap.vault_address).content;
-        assert!(Option::is_some(content), Errors::invalid_state(EACCESSOR_IN_USE));
+        assert!(Option::is_some(content), Errors::invalid_state(ERR_ACCESSOR_IN_USE));
         ReadAccessor{ vault_address: cap.vault_address, content: Option::extract(content) }
     }
 
@@ -353,7 +353,7 @@ module Std::Vault {
         let content = &mut borrow_global_mut<Vault<Content>>(vault_address).content;
         // We (should be/are) able to prove that the below cannot happen, but we leave the assertion
         // here anyway for double safety.
-        assert!(Option::is_none(content), Errors::internal(EACCESSOR_INCONSISTENCY));
+        assert!(Option::is_none(content), Errors::internal(ERR_ACCESSOR_INCONSISTENCY));
         Option::fill(content, new_content);
     }
 
@@ -372,7 +372,7 @@ module Std::Vault {
     public fun modify_accessor<Content: store + drop>(cap: &ModifyCap<Content>): ModifyAccessor<Content>
     acquires Vault {
         let content = &mut borrow_global_mut<Vault<Content>>(cap.vault_address).content;
-        assert!(Option::is_some(content), Errors::invalid_state(EACCESSOR_IN_USE));
+        assert!(Option::is_some(content), Errors::invalid_state(ERR_ACCESSOR_IN_USE));
         ModifyAccessor{ vault_address: cap.vault_address, content: Option::extract(content) }
     }
 
@@ -389,7 +389,7 @@ module Std::Vault {
         let content = &mut borrow_global_mut<Vault<Content>>(vault_address).content;
         // We (should be/are) able to prove that the below cannot happen, but we leave the assertion
         // here anyway for double safety.
-        assert!(Option::is_none(content), Errors::internal(EACCESSOR_INCONSISTENCY));
+        assert!(Option::is_none(content), Errors::internal(ERR_ACCESSOR_INCONSISTENCY));
         Option::fill(content, new_content);
     }
 
@@ -403,17 +403,17 @@ module Std::Vault {
     acquires VaultDelegates, VaultDelegate, VaultEvents {
         assert!(
             exists<VaultDelegates<Content>>(cap.vault_address),
-            Errors::invalid_state(EDELEGATION_NOT_ENABLED)
+            Errors::invalid_state(ERR_DELEGATION_NOT_ENABLED)
         );
 
         let addr = Signer::address_of(to_signer);
-        assert!(addr != cap.vault_address, Errors::invalid_argument(EDELEGATE_TO_SELF));
+        assert!(addr != cap.vault_address, Errors::invalid_argument(ERR_DELEGATE_TO_SELF));
 
         if (!exists<VaultDelegate<Content>>(addr)) {
             // Create VaultDelegate if it is not yet existing.
             move_to<VaultDelegate<Content>>(
                 to_signer,
-                VaultDelegate{vault_address: cap.vault_address, granted_caps: Vector::empty()}
+                VaultDelegate{ vault_address: cap.vault_address, granted_caps: Vector::empty() }
             );
             // Add the the delegate to VaultDelegates.
             let vault_delegates = borrow_global_mut<VaultDelegates<Content>>(cap.vault_address);
@@ -433,16 +433,16 @@ module Std::Vault {
     acquires VaultDelegates, VaultDelegate, VaultEvents {
         assert!(
             exists<VaultDelegates<Content>>(cap.vault_address),
-            Errors::invalid_state(EDELEGATION_NOT_ENABLED)
+            Errors::invalid_state(ERR_DELEGATION_NOT_ENABLED)
         );
-        assert!(exists<VaultDelegate<Content>>(addr), Errors::not_published(EDELEGATE));
+        assert!(exists<VaultDelegate<Content>>(addr), Errors::not_published(ERR_DELEGATE));
 
         let delegate = borrow_global_mut<VaultDelegate<Content>>(addr);
         remove_element(&mut delegate.granted_caps, &cap_type);
 
         // If the granted caps of this delegate drop to zero, remove it.
         if (Vector::is_empty(&delegate.granted_caps)) {
-            let VaultDelegate{ vault_address: _owner, granted_caps: _granted_caps} =
+            let VaultDelegate{ vault_address: _owner, granted_caps: _granted_caps } =
                 move_from<VaultDelegate<Content>>(addr);
             let vault_delegates = borrow_global_mut<VaultDelegates<Content>>(cap.vault_address);
             remove_element(&mut vault_delegates.delegates, &addr);
@@ -457,12 +457,12 @@ module Std::Vault {
     acquires VaultDelegates, VaultDelegate, VaultEvents {
         assert!(
             exists<VaultDelegates<Content>>(cap.vault_address),
-            Errors::invalid_state(EDELEGATION_NOT_ENABLED)
+            Errors::invalid_state(ERR_DELEGATION_NOT_ENABLED)
         );
         let delegates = &mut borrow_global_mut<VaultDelegates<Content>>(cap.vault_address).delegates;
         while (!Vector::is_empty(delegates)) {
             let addr = Vector::pop_back(delegates);
-            let VaultDelegate{ vault_address: _vault_address, granted_caps} =
+            let VaultDelegate{ vault_address: _vault_address, granted_caps } =
                 move_from<VaultDelegate<Content>>(cap.vault_address);
             while (!Vector::is_empty(&granted_caps)) {
                 let cap_type = Vector::pop_back(&mut granted_caps);
@@ -488,10 +488,10 @@ module Std::Vault {
 
     /// Emits a delegation or revocation event if event generation is enabled.
     fun emit_delegate_event<Content: store + drop>(
-           cap: &DelegateCap<Content>,
-           cap_type: CapType,
-           delegate: address,
-           is_revoked: bool
+        cap: &DelegateCap<Content>,
+        cap_type: CapType,
+        delegate: address,
+        is_revoked: bool
     ) acquires VaultEvents {
         if (exists<VaultEvents<Content>>(cap.vault_address)) {
             let event = VaultDelegateEvent{
@@ -514,21 +514,21 @@ module Std::Vault {
     public fun transfer<Content: store + drop>(cap: &TransferCap<Content>, to_owner: &signer)
     acquires Vault, VaultEvents, VaultDelegate, VaultDelegates {
         let new_addr = Signer::address_of(to_owner);
-        assert!(!exists<Vault<Content>>(new_addr), Errors::already_published(EVAULT));
+        assert!(!exists<Vault<Content>>(new_addr), Errors::already_published(ERR_VAULT));
         assert!(
             Option::is_some(&borrow_global<Vault<Content>>(cap.vault_address).content),
-            Errors::invalid_state(EACCESSOR_IN_USE)
+            Errors::invalid_state(ERR_ACCESSOR_IN_USE)
         );
 
         // Revoke all delegates.
         if (exists<VaultDelegates<Content>>(cap.vault_address)) {
-            let delegate_cap = DelegateCap<Content>{vault_address: cap.vault_address, authority: cap.authority };
+            let delegate_cap = DelegateCap<Content>{ vault_address: cap.vault_address, authority: cap.authority };
             revoke_all(&delegate_cap);
         };
 
         // Emit event if event generation is enabled. We emit the event on the old vault not the new one.
         if (exists<VaultEvents<Content>>(cap.vault_address)) {
-            let event = VaultTransferEvent {
+            let event = VaultTransferEvent{
                 metadata: *&borrow_global<VaultEvents<Content>>(cap.vault_address).metadata,
                 vault_address: cap.vault_address,
                 authority: cap.authority,
