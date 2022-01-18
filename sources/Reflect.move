@@ -10,11 +10,11 @@ module Std::Reflect {
     }
 
     public fun mod_name_of<Type>(): vector<u8> {
-        type_info_of<Type>().mod_name
+        *&type_info_of<Type>().mod_name
     }
 
     public fun type_name_of<Type>(): vector<u8> {
-        type_info_of<Type>().type_name
+        *&type_info_of<Type>().type_name
     }
 
     public native fun type_info_of<Type>(): TypeInfo;
