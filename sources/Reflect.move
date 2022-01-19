@@ -6,19 +6,19 @@ module Std::Reflect {
     }
 
     public fun mod_address_of<Type>(): address {
-        type_info_of<Type>().addr
+        type_info<Type>().addr
     }
 
     public fun mod_name_of<Type>(): vector<u8> {
-        *&type_info_of<Type>().mod_name
+        *&type_info<Type>().mod_name
     }
 
     public fun type_name_of<Type>(): vector<u8> {
-        *&type_info_of<Type>().type_name
+        *&type_info<Type>().type_name
     }
 
-    public native fun type_info_of<Type>(): TypeInfo;
-    spec type_info_of {
+    public native fun type_info<Type>(): TypeInfo;
+    spec type_info {
         pragma opaque;
     }
 }
