@@ -10,17 +10,15 @@ module Std::ReflectTests {
 
     #[test]
     fun test_std_modules_publisher() {
-        let (mod_address, mod_name, type_name) = Reflect::type_of<Option<u8>>();
-        assert!(mod_address == @Std, 1);
-        assert!(mod_name == b"Option", 2);
-        assert!(type_name == b"Option", 2);
+        assert!(Reflect::mod_address_of<Option<u8>>() == @Std, 1);
+        assert!(Reflect::mod_name_of<Option<u8>>() == b"Option", 2);
+        assert!(Reflect::type_name_of<Option<u8>>() == b"Option", 2);
     }
 
     #[test]
     fun test_custom_module() {
-        let (mod_address, mod_name, type_name) = Reflect::type_of<Module::S>();
-        assert!(mod_address == @0x42, 1);
-        assert!(mod_name == b"Module", 2);
-        assert!(type_name == b"S", 2);
+        assert!(Reflect::mod_address_of<Module::S>() == @0x42, 1);
+        assert!(Reflect::mod_name_of<Module::S>() == b"Module", 2);
+        assert!(Reflect::type_name_of<Module::S>() == b"S", 2);
     }
 }
