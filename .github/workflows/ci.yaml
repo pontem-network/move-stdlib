@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Get dove
-        uses: pontem-network/get-dove@add-get-boogie
+        uses: pontem-network/get-dove@main
         with:
           version: latest
           boogie: true
