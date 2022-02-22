@@ -46,4 +46,4 @@ jobs:
           boogie: true
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: dove package prove
+      - run: dove prove
