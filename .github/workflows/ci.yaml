@@ -24,10 +24,10 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build
-        run: dove package build
+        run: dove build
 
       - name: Test
-        run: dove package test
+        run: dove test
 
   prove:
     name: Prove
