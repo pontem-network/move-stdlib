@@ -98,7 +98,7 @@ module Std::ASCII {
        true
     }
     spec all_characters_printable {
-        ensures result ==> (forall j in 0..100: true);
+        ensures result ==> (forall j in 0..len(string.bytes): is_printable_char(string.bytes[j]));
     }
 
     public fun push_char(string: &mut String, char: Char) {
