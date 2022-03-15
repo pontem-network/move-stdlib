@@ -9,12 +9,11 @@ module Std::BCSTests {
     struct Box31<T> has copy, drop, store { x: Box15<Box15<T>> }
     struct Box63<T> has copy, drop, store { x: Box31<Box31<T>> }
     struct Box127<T> has copy, drop, store { x: Box63<Box63<T>> }
-    struct Box255<T> has copy, drop, store { x: Box127<Box127<T>> }
 
     #[test]
     fun bcs_address() {
-        let addr = @0x89b9f9d1fadc027cf9532d6f99041522;
-        let expected_output = x"0000000000000000000000000000000089b9f9d1fadc027cf9532d6f99041522";
+        let addr = @0x89b9f9d1fadc027cf9532d6f9904152289b9f9d1fadc027cf9532d6f99041522;
+        let expected_output = x"89b9f9d1fadc027cf9532d6f9904152289b9f9d1fadc027cf9532d6f99041522";
         assert!(BCS::to_bytes(&addr) == expected_output, 0);
     }
 
@@ -73,23 +72,14 @@ module Std::BCSTests {
         Box127 { x: box63(box63(x)) }
     }
 
-    fun box255<T>(x: T): Box255<T> {
-        Box255 { x: box127(box127(x)) }
-    }
-
     #[test]
     fun encode_128() {
         BCS::to_bytes(&box127(true));
     }
 
     #[test]
-    fun encode_256() {
-        BCS::to_bytes(&box255(true));
-    }
-
-    #[test]
     #[expected_failure(abort_code = 453)]
-    fun encode_257() {
-        BCS::to_bytes(&Box { x: box255(true) });
+    fun encode_129() {
+        BCS::to_bytes(&Box { x: box127(true) });
     }
 }
